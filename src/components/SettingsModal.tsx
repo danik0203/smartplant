@@ -12,9 +12,10 @@ import {
   RefreshCw,
   Plus,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  LogOut
 } from 'lucide-react';
-import { HouseholdMember, Plant, PlantCareLog } from '../types';
+import { HouseholdMember, Plant, PlantCareLog, GoogleUserProfile } from '../types';
 import { plantSupabase } from '../services/supabase';
 import { getStoredGeminiKey, saveStoredGeminiKey } from '../services/geminiPlantAi';
 
@@ -27,6 +28,8 @@ interface SettingsModalProps {
   allPlants: Plant[];
   allLogs: PlantCareLog[];
   onImportBackup: (data: { plants: Plant[]; logs: PlantCareLog[]; members: HouseholdMember[] }) => void;
+  googleUser: GoogleUserProfile | null;
+  onLogout: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -37,7 +40,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSelectCurrentMember,
   allPlants,
   allLogs,
-  onImportBackup
+  onImportBackup,
+  googleUser,
+  onLogout
 }) => {
   const [geminiKey, setGeminiKey] = useState(getStoredGeminiKey());
   const [newMemberName, setNewMemberName] = useState('');
@@ -200,6 +205,51 @@ create policy "public insert photos" on storage.objects for insert with check (b
         </div>
 
         <div className="p-5 space-y-5">
+          {/* Section 0: Google Account & Logout */}
+          <div className="rounded-2xl bg-white dark:bg-void-900 border border-slate-200/80 dark:border-white/10 p-4 space-y-3 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-xs text-slate-400 uppercase tracking-wider block">
+                חשבון מחובר (Google)
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200">
+                פעיל ומאומת ✓
+              </span>
+            </div>
+
+            {googleUser && (
+              <div className="flex items-center justify-between bg-slate-50 dark:bg-void-800 p-3 rounded-2xl gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {googleUser.picture ? (
+                    <img
+                      src={googleUser.picture}
+                      alt={googleUser.name}
+                      className="w-10 h-10 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <span className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                      {googleUser.name.charAt(0)}
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white truncate block">
+                      {googleUser.name}
+                    </span>
+                    <span className="text-xs text-slate-400 truncate block">{googleUser.email}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onLogout}
+                  title="התנתק מחשבון Google ונעל את האפליקציה"
+                  className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 shrink-0"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>התנתק</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Section 1: Household Members */}
           <div className="rounded-2xl bg-white dark:bg-void-900 border border-slate-200/80 dark:border-white/10 p-4 space-y-3 shadow-sm">
             <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">

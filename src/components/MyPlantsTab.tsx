@@ -89,20 +89,19 @@ export const MyPlantsTab: React.FC<MyPlantsTabProps> = ({
             <div
               key={plant.id}
               onClick={() => onSelectPlant(plant)}
-              className="rounded-3xl bg-white dark:bg-void-900 border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-sm hover:border-emerald-500/40 transition flex flex-col cursor-pointer"
+              className="rounded-3xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 overflow-hidden shadow-sm hover:border-emerald-500/50 hover:shadow-md transition flex flex-col cursor-pointer"
             >
               {/* Visual Photo Header */}
-              <div className="relative h-36 w-full bg-slate-100 dark:bg-void-800">
+              <div className="relative h-32 w-full bg-slate-100 dark:bg-void-800 shrink-0">
                 <img
                   src={plant.imageUrl}
                   alt={plant.name}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
 
                 {/* Top Right: Room Icon Pill */}
                 <span
-                  className="absolute top-2.5 right-2.5 w-7 h-7 rounded-xl bg-black/55 backdrop-blur-md text-xs flex items-center justify-center"
+                  className="absolute top-2 right-2 w-7 h-7 rounded-xl bg-black/60 backdrop-blur-md text-xs flex items-center justify-center text-white shadow-sm"
                   title={roomMeta.label}
                 >
                   {roomMeta.icon}
@@ -110,7 +109,7 @@ export const MyPlantsTab: React.FC<MyPlantsTabProps> = ({
 
                 {/* Top Left: Health Score Pill */}
                 <span
-                  className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-xl border text-[10px] font-black backdrop-blur-md ${healthMeta.badgeClass}`}
+                  className={`absolute top-2 left-2 px-2 py-0.5 rounded-xl border text-[10px] font-black backdrop-blur-md shadow-sm ${healthMeta.badgeClass}`}
                 >
                   {healthMeta.icon} {plant.healthScore}%
                 </span>
@@ -118,34 +117,37 @@ export const MyPlantsTab: React.FC<MyPlantsTabProps> = ({
                 {/* Issue Indicator Dot */}
                 {plant.currentIssues && plant.currentIssues.length > 0 && (
                   <span
-                    className="absolute bottom-2.5 left-2.5 w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shadow"
+                    className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-lg bg-amber-500 text-white text-[10px] font-bold flex items-center gap-0.5 shadow"
                     title={plant.currentIssues[0]}
                   >
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>דורש יחס</span>
                   </span>
                 )}
-
-                {/* Name Overlay */}
-                <div className="absolute bottom-2.5 right-2.5 left-10 text-white">
-                  <h3 className="font-extrabold text-sm leading-tight truncate">{plant.name}</h3>
-                </div>
               </div>
 
-              {/* Minimal Icon Metrics + 1-Tap Actions */}
-              <div className="p-2.5 flex flex-col gap-2.5">
-                {/* Icon Specs Row */}
-                <div className="flex items-center justify-between px-1 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+              {/* Clean Readable Card Body (Below Image - Text NEVER disappears) */}
+              <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 dark:text-white line-clamp-1">
+                    {plant.name}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold line-clamp-1">
+                    {plant.species || roomMeta.label}
+                  </p>
+                </div>
+
+                {/* Specs Pill Row */}
+                <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300 font-bold border-t border-slate-100 dark:border-white/5 pt-2">
                   <span
-                    className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400"
+                    className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-black"
                     title={`השקיה כל ${plant.wateringFrequencyDays} ימים`}
                   >
                     <Droplets className="w-3.5 h-3.5" />
-                    <span>{plant.wateringFrequencyDays}ד׳</span>
+                    <span>כל {plant.wateringFrequencyDays} ימ׳</span>
                   </span>
 
                   <span title={sunMeta.label}>{sunMeta.icon}</span>
-
-                  <span title={plant.hasDrainageHole ? 'יש חור ניקוז' : 'ללא ניקוז'}>🪴</span>
 
                   {plant.isPetSafe && (
                     <span title="ידידותי לחיות מחמד" className="text-emerald-600">
@@ -156,25 +158,25 @@ export const MyPlantsTab: React.FC<MyPlantsTabProps> = ({
 
                 {/* 1-Tap Action Row */}
                 <div
-                  className="flex items-center gap-1.5"
+                  className="flex items-center gap-1.5 pt-0.5"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => onWaterPlant(plant)}
-                    className={`flex-1 py-2 px-2 rounded-2xl font-extrabold text-xs flex items-center justify-center gap-1 active:scale-95 transition ${
+                    className={`flex-1 py-2 px-2.5 rounded-2xl font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition ${
                       isThirsty
                         ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-sm shadow-sky-500/25'
-                        : 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-300'
+                        : 'bg-slate-100 hover:bg-sky-50 dark:bg-void-800 dark:hover:bg-void-700 text-slate-700 dark:text-slate-200'
                     }`}
                   >
                     <Droplets className="w-3.5 h-3.5" />
-                    <span>{isThirsty ? 'השקה' : `${waterStatus.daysUntilNext}ד׳`}</span>
+                    <span>{isThirsty ? 'השקה עכשיו' : `עוד ${waterStatus.daysUntilNext} ימים`}</span>
                   </button>
 
                   <button
                     onClick={() => onOpenDoctorForPlant(plant)}
-                    title="אבחון AI"
-                    className="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-emerald-50 dark:bg-void-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center active:scale-95 transition shrink-0"
+                    title="אבחון רופא AI"
+                    className="w-9 h-9 rounded-2xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center active:scale-95 transition shrink-0"
                   >
                     <Stethoscope className="w-4 h-4" />
                   </button>

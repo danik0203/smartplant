@@ -1,7 +1,6 @@
 import React from 'react';
-import { Sprout, Settings, Sun, Moon, Cloud, HardDrive, Home, ChevronDown, Bot } from 'lucide-react';
+import { Sprout, Settings, Sun, Moon, Home, ChevronDown, LogOut } from 'lucide-react';
 import { HouseholdMember, Household, GoogleUserProfile } from '../types';
-import { GoogleAuthButton } from './GoogleAuthButton';
 
 interface NavbarProps {
   members: HouseholdMember[];
@@ -18,6 +17,7 @@ interface NavbarProps {
   onOpenHouseholdModal: () => void;
   googleUser: GoogleUserProfile | null;
   onGoogleUserChange: (user: GoogleUserProfile | null) => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -27,30 +27,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   isDark,
   onToggleDark,
   onOpenSettings,
-  onOpenAIChat,
   syncSource,
   currentHousehold,
   onOpenHouseholdModal,
   googleUser,
-  onGoogleUserChange
+  onLogout
 }) => {
-  const cycleMember = () => {
-    if (members.length <= 1) return;
-    const idx = members.findIndex((m) => m.id === currentMember.id);
-    const next = members[(idx + 1) % members.length];
-    onSelectMember(next);
-  };
-
   return (
-    <header className="sticky top-0 z-30 bg-[#FAF8F5]/85 dark:bg-void-950/85 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/5 pt-safe">
+    <header className="sticky top-0 z-30 bg-[#FAF8F5]/90 dark:bg-void-950/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/10 pt-safe">
       <div className="max-w-2xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
         {/* Brand + Household Selector */}
-        <div className="flex items-center gap-2 shrink-0 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-sm shadow-emerald-600/25 shrink-0">
-            <Sprout className="w-4 h-4 sm:w-5 sm:h-5" />
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-sm shadow-emerald-600/30 shrink-0">
+            <Sprout className="w-4 h-4" />
           </div>
 
-          <span className="font-black text-sm sm:text-base text-slate-900 dark:text-white tracking-tight hidden xs:inline">
+          <span className="font-black text-sm text-slate-900 dark:text-white tracking-tight shrink-0">
             המשתלה
           </span>
 
@@ -64,8 +56,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Household / Group Pill */}
           <button
             onClick={onOpenHouseholdModal}
-            title={`בית פעיל: ${currentHousehold.name}\nלחץ לניהול קוד שותפים, מעבר בין בתים או יצירת קבוצה`}
-            className="h-8 px-2 sm:px-2.5 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1 hover:border-emerald-500/60 active:scale-95 transition shadow-sm max-w-[130px] sm:max-w-[160px]"
+            title={`בית פעיל: ${currentHousehold.name}\nלחץ לניהול קוד שותפים או מעבר בין בתים`}
+            className="h-8 px-2.5 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5 hover:border-emerald-500/60 active:scale-95 transition shadow-sm max-w-[140px] sm:max-w-[180px]"
           >
             <Home className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="truncate">{currentHousehold.name}</span>
@@ -73,38 +65,44 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Action Bar: Google Auth + Member + Theme + Settings */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-          {/* Google Auth Button */}
-          <GoogleAuthButton user={googleUser} onUserChange={onGoogleUserChange} />
+        {/* Action Bar: Google User Profile + Theme + Settings */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Authenticated Google User Pill with Logout */}
+          {googleUser && (
+            <div className="flex items-center gap-1.5 h-8 px-2 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 shadow-sm">
+              {googleUser.picture ? (
+                <img
+                  src={googleUser.picture}
+                  alt={googleUser.name}
+                  className="w-5 h-5 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <span className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-black flex items-center justify-center shrink-0">
+                  {googleUser.name.charAt(0)}
+                </span>
+              )}
 
-          {/* 1-Tap Member Switcher */}
-          <button
-            onClick={cycleMember}
-            title={`שותף פעיל: ${currentMember.name}\nלחץ להחלפה מהירה`}
-            className="h-8 px-2 sm:px-2.5 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1 active:scale-95 transition shadow-sm"
-          >
-            <span className="text-sm leading-none">{currentMember.avatar}</span>
-            <span className="max-w-[50px] sm:max-w-[65px] truncate hidden sm:inline">
-              {currentMember.name}
-            </span>
-          </button>
+              <span className="text-xs font-black text-slate-900 dark:text-white max-w-[75px] truncate hidden sm:inline">
+                {googleUser.name}
+              </span>
 
-          {/* AI Botanist Chat */}
-          <button
-            onClick={onOpenAIChat}
-            aria-label="דבר עם מומחה הצמחים AI"
-            title="דבר עם מומחה הצמחים AI 🤖"
-            className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 active:scale-95 transition hover:bg-emerald-100"
-          >
-            <Bot className="w-4 h-4" />
-          </button>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  title="התנתק מחשבון Google ונעל את האפליקציה"
+                  className="p-1 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 active:scale-90 transition"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Theme Toggle */}
           <button
             onClick={onToggleDark}
             aria-label="ערכת נושא"
-            className="w-8 h-8 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition"
+            className="w-8 h-8 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-95 transition hover:border-slate-300"
           >
             {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
           </button>
@@ -113,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenSettings}
             aria-label="הגדרות"
-            className="w-8 h-8 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition"
+            className="w-8 h-8 rounded-xl bg-white dark:bg-void-900 border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 active:scale-95 transition hover:border-slate-300"
           >
             <Settings className="w-3.5 h-3.5" />
           </button>

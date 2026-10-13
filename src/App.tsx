@@ -24,6 +24,7 @@ import { AddPlantModal } from './components/AddPlantModal';
 import { SettingsModal } from './components/SettingsModal';
 import { HouseholdModal } from './components/HouseholdModal';
 import { AIChatModal } from './components/AIChatModal';
+import { LoginScreen } from './components/LoginScreen';
 
 export function App() {
   const [currentHousehold, setCurrentHousehold] = useState<Household>(() =>
@@ -175,6 +176,16 @@ export function App() {
     setCurrentHousehold(h);
     await refreshData(h.id);
     showToast(`קבוצה פעילה: ${h.name} ✨`);
+  };
+
+  // Google Logout (Closes app and returns to Login Screen)
+  const handleLogout = async () => {
+    if (window.confirm('האם להתנתק מחשבון Google ולנעול את האפליקציה?')) {
+      await plantSupabase.signOut();
+      setGoogleUser(null);
+      setIsSettingsOpen(false);
+      showToast('התנתקת בהצלחה מחשבון Google');
+    }
   };
 
   // Water a Plant
@@ -395,6 +406,18 @@ export function App() {
     (p) => p.healthStatus === 'needs_attention' || p.healthStatus === 'critical'
   ).length;
 
+  // Mandatory Google Login Gatekeeper
+  if (!googleUser) {
+    return (
+      <LoginScreen
+        onLoginSuccess={(user) => {
+          setGoogleUser(user);
+          refreshData();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] dark:bg-void-950 text-slate-900 dark:text-slate-100">
       {/* Top Navbar */}
@@ -416,6 +439,7 @@ export function App() {
         onOpenAIChat={() => setIsChatOpen(true)}
         googleUser={googleUser}
         onGoogleUserChange={(user) => setGoogleUser(user)}
+        onLogout={handleLogout}
       />
 
       {/* Toast Feedback */}
@@ -543,6 +567,8 @@ export function App() {
             localStorage.setItem(STORAGE_KEYS.LOGS_CACHE, JSON.stringify(data.logs));
             localStorage.setItem(STORAGE_KEYS.MEMBERS_CACHE, JSON.stringify(data.members));
           }}
+          googleUser={googleUser}
+          onLogout={handleLogout}
         />
       )}
 

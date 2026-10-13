@@ -183,14 +183,14 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                           }
                         >
                           {status.urgency === 'overdue'
-                            ? `איחור ${Math.abs(status.daysUntilNext)} ימ׳`
+                            ? `איחור של ${Math.abs(status.daysUntilNext)} ימים`
                             : 'היום'}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Left: 1-Tap Action Buttons (No text clutter) */}
+                  {/* Left: 1-Tap Action Buttons */}
                   <div
                     className="flex items-center gap-1.5 shrink-0"
                     onClick={(e) => e.stopPropagation()}
@@ -198,11 +198,11 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                     {/* Snooze 2 days */}
                     <button
                       onClick={() => onSnoozePlant(plant, 2)}
-                      title="האדמה לחה - דחה ביומיים"
-                      className="w-10 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-void-800 dark:hover:bg-void-700 text-slate-600 dark:text-slate-300 flex flex-col items-center justify-center active:scale-90 transition"
+                      title="האדמה עדיין לחה - דחה את ההשקיה ביומיים"
+                      className="h-11 px-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-void-800 dark:hover:bg-void-700 text-slate-700 dark:text-slate-200 flex flex-col items-center justify-center active:scale-90 transition font-bold"
                     >
-                      <Clock className="w-4 h-4 text-amber-500" />
-                      <span className="text-[9px] font-bold">+2ד׳</span>
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-[10px] leading-tight">+2 ימים</span>
                     </button>
 
                     {/* 1-Tap Water Now */}
@@ -309,7 +309,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
 
                     {/* Minimal Moisture Bar + Days Left */}
                     <div className="mt-1 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-                      <span>עוד {status.daysUntilNext} ימ׳</span>
+                      <span>עוד {status.daysUntilNext} ימים</span>
                       <span className="text-sky-500 font-bold">{status.moisturePercent}%</span>
                     </div>
                     <div className="mt-1 w-full h-1.5 rounded-full bg-slate-100 dark:bg-void-800 overflow-hidden">
