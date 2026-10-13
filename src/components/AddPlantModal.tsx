@@ -29,6 +29,7 @@ import {
   PlantPreset
 } from '../services/mockPlants';
 import { analyzeNewPlantPhotoWithAI, getStoredGeminiKey } from '../services/geminiPlantAi';
+import { plantSupabase } from '../services/supabase';
 
 interface AddPlantModalProps {
   onClose: () => void;
@@ -131,7 +132,8 @@ export const AddPlantModal: React.FC<AddPlantModalProps> = ({
         (progress) => setScanProgress(progress)
       );
 
-      setImageUrl(photoDataUrl);
+      const cloudUrl = await plantSupabase.uploadPhoto(file);
+      setImageUrl(cloudUrl || photoDataUrl);
       setName(analysis.name);
       setSpecies(analysis.species);
       setWateringFrequencyDays(analysis.wateringFrequencyDays);

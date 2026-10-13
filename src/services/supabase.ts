@@ -505,6 +505,34 @@ export class PlantSupabaseService {
       }
     }
   }
+
+  public async uploadPhoto(blobOrFile: Blob | File): Promise<string> {
+    if (!this.client) this.initClient();
+    if (this.client) {
+      try {
+        const ext = 'jpg';
+        const fileName = `plant_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+        const { data, error } = await this.client.storage
+          .from('plant-photos')
+          .upload(fileName, blobOrFile, {
+            contentType: 'image/jpeg',
+            upsert: true
+          });
+
+        if (!error && data?.path) {
+          const { data: publicUrlData } = this.client.storage
+            .from('plant-photos')
+            .getPublicUrl(data.path);
+          if (publicUrlData?.publicUrl) {
+            return publicUrlData.publicUrl;
+          }
+        }
+      } catch (e) {
+        console.warn('Storage upload error, using fallback dataUrl', e);
+      }
+    }
+    return '';
+  }
 }
 
 export const plantSupabase = new PlantSupabaseService();

@@ -33,6 +33,7 @@ export async function compressPlantPhoto(file: File | Blob, maxDimension = 1000)
   dataUrl: string;
   base64: string;
   mimeType: string;
+  blob?: Blob;
 }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -70,11 +71,19 @@ export async function compressPlantPhoto(file: File | Blob, maxDimension = 1000)
         ctx.drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
         const [, base64] = dataUrl.split(',');
-        resolve({
-          dataUrl,
-          base64,
-          mimeType: 'image/jpeg'
-        });
+
+        canvas.toBlob(
+          (blob) => {
+            resolve({
+              dataUrl,
+              base64,
+              mimeType: 'image/jpeg',
+              blob: blob || undefined
+            });
+          },
+          'image/jpeg',
+          0.82
+        );
       };
       img.onerror = (err) => reject(err);
       img.src = e.target?.result as string;

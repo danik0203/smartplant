@@ -172,7 +172,10 @@ alter table public.plant_care_logs enable row level security;
 alter table public.plant_members enable row level security;
 create policy "allow all plants" on public.plants for all using (true) with check (true);
 create policy "allow all logs" on public.plant_care_logs for all using (true) with check (true);
-create policy "allow all members" on public.plant_members for all using (true) with check (true);`;
+create policy "allow all members" on public.plant_members for all using (true) with check (true);
+insert into storage.buckets (id, name, public) values ('plant-photos', 'plant-photos', true) on conflict (id) do nothing;
+create policy "public select photos" on storage.objects for select using (bucket_id = 'plant-photos');
+create policy "public insert photos" on storage.objects for insert with check (bucket_id = 'plant-photos');`;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">

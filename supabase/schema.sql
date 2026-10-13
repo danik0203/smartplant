@@ -73,3 +73,17 @@ alter table public.plant_members enable row level security;
 create policy "Allow all operations for plants" on public.plants for all using (true) with check (true);
 create policy "Allow all operations for plant_care_logs" on public.plant_care_logs for all using (true) with check (true);
 create policy "Allow all operations for plant_members" on public.plant_members for all using (true) with check (true);
+
+-- 6. באקט אחסון תמונות צמחים ציבורי (Plant Photos Storage Bucket)
+insert into storage.buckets (id, name, public)
+values ('plant-photos', 'plant-photos', true)
+on conflict (id) do nothing;
+
+create policy "Public Access for Plant Photos"
+on storage.objects for select using (bucket_id = 'plant-photos');
+
+create policy "Public Insert for Plant Photos"
+on storage.objects for insert with check (bucket_id = 'plant-photos');
+
+create policy "Public Update for Plant Photos"
+on storage.objects for update using (bucket_id = 'plant-photos');
