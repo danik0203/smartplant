@@ -71,6 +71,7 @@ export interface Plant {
   currentIssues: string[];
   careRecommendations: string[];
   diagnosisHistory: PlantDiagnosisRecord[];
+  householdId?: string;
   notes?: string;
   createdAt: number;
 }
@@ -86,6 +87,7 @@ export type CareActionType =
 
 export interface PlantCareLog {
   id: string;
+  householdId?: string;
   plantId: string;
   plantName: string;
   action: CareActionType;
@@ -94,14 +96,27 @@ export interface PlantCareLog {
   notes?: string;
 }
 
-export interface HouseholdMember {
+export interface Household {
   id: string;
   name: string;
+  inviteCode: string;
+  createdAt: number;
+  createdBy?: string;
+}
+
+export interface HouseholdMember {
+  id: string;
+  householdId: string;
+  userId: string;
+  name: string;
+  email?: string;
   avatar: string;
-  color: string;
+  color?: string;
   phone?: string;
   googleEmail?: string;
   picture?: string;
+  role?: 'admin' | 'member';
+  joinedAt?: number;
 }
 
 export interface GoogleUserProfile {

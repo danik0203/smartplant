@@ -259,9 +259,17 @@ const daysAgoISO = (days: number): string => {
   return d.toISOString();
 };
 
+export const DEFAULT_HOUSEHOLD = {
+  id: 'default_home',
+  name: 'הדירה שלנו 🏡',
+  inviteCode: 'PLANT-777',
+  createdAt: Date.now() - 86400000 * 30,
+  createdBy: 'דניאל'
+};
+
 export const INITIAL_MEMBERS: HouseholdMember[] = [
-  { id: 'mem_1', name: 'דניאל', avatar: '🌿', color: '#16a34a' },
-  { id: 'mem_2', name: 'שותף/ה לבית', avatar: '💧', color: '#0284c7' }
+  { id: 'mem_1', householdId: 'default_home', userId: 'user_1', name: 'דניאל', avatar: '🌿', color: '#16a34a', role: 'admin' },
+  { id: 'mem_2', householdId: 'default_home', userId: 'user_2', name: 'שותף/ה לבית', avatar: '💧', color: '#0284c7', role: 'member' }
 ];
 
 export const INITIAL_PLANTS: Plant[] = [

@@ -1,12 +1,37 @@
 -- =========================================================================
--- Supabase Schema for "המשתלה הביתית" (Home Plants Care & AI Doctor PWA)
+-- Supabase Schema for "SmartPlant" (המשתלה הביתית)
+-- קבוצות / בתים משותפים, שותפים, צמחים, יומן השקיות, התחברות Google ובאקט תמונות
 -- העתק את כל הקוד הזה והדבק ב-Supabase > SQL Editor ולחץ RUN
 -- =========================================================================
 
--- 1. טבלת צמחים (Plants)
+-- 1. טבלת בתים / קבוצות משותפות (Households / Gardens)
+create table if not exists public.households (
+  id text primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  name text not null,
+  invite_code text unique not null,
+  created_by text default ''
+);
+
+-- 2. טבלת חברי הבית / שותפים (Household Members)
+create table if not exists public.household_members (
+  id text primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  household_id text not null references public.households(id) on delete cascade,
+  user_id text not null,
+  name text not null,
+  email text default '',
+  avatar text default '🌿',
+  picture text default '',
+  role text not null default 'member',
+  unique (household_id, user_id)
+);
+
+-- 3. טבלת צמחים (Plants) משויכת לבית
 create table if not exists public.plants (
   id text primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  household_id text default 'default_home',
   name text not null,
   nickname text default '',
   species text default '',
@@ -37,10 +62,11 @@ create table if not exists public.plants (
   notes text default ''
 );
 
--- 2. טבלת יומן השקיות וטיפולים בבית (Plant Care Logs)
+-- 4. טבלת יומן השקיות ופעולות בבית (Plant Care Logs) משויכת לבית
 create table if not exists public.plant_care_logs (
   id text primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  household_id text default 'default_home',
   plant_id text not null,
   plant_name text not null,
   action text not null,
@@ -48,33 +74,30 @@ create table if not exists public.plant_care_logs (
   notes text default ''
 );
 
--- 3. טבלת דיירי הבית / שותפים (Household Members)
-create table if not exists public.plant_members (
-  id text primary key,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  name text not null,
-  avatar text default '🌿',
-  color text default '#16a34a',
-  phone text default '',
-  google_email text default '',
-  picture text default ''
-);
+-- אינדקסים למהירות שליפה לפי בית
+create index if not exists idx_plants_household on public.plants(household_id);
+create index if not exists idx_logs_household on public.plant_care_logs(household_id);
+create index if not exists idx_members_household on public.household_members(household_id);
+create index if not exists idx_households_invite on public.households(invite_code);
 
--- 4. אפשור גישה בזמן אמת (Enable Realtime)
+-- 5. אפשור סנכרון בלייב (Realtime) לכל הטבלאות
+alter publication supabase_realtime add table public.households;
+alter publication supabase_realtime add table public.household_members;
 alter publication supabase_realtime add table public.plants;
 alter publication supabase_realtime add table public.plant_care_logs;
-alter publication supabase_realtime add table public.plant_members;
 
--- 5. הגדרת פוליסות גישה חופשית לקריאה וכתיבה לבני הבית
+-- 6. הגדרת הרשאות גישה פתוחה (Row Level Security)
+alter table public.households enable row level security;
+alter table public.household_members enable row level security;
 alter table public.plants enable row level security;
 alter table public.plant_care_logs enable row level security;
-alter table public.plant_members enable row level security;
 
+create policy "Allow all operations for households" on public.households for all using (true) with check (true);
+create policy "Allow all operations for household_members" on public.household_members for all using (true) with check (true);
 create policy "Allow all operations for plants" on public.plants for all using (true) with check (true);
 create policy "Allow all operations for plant_care_logs" on public.plant_care_logs for all using (true) with check (true);
-create policy "Allow all operations for plant_members" on public.plant_members for all using (true) with check (true);
 
--- 6. באקט אחסון תמונות צמחים ציבורי (Plant Photos Storage Bucket)
+-- 7. באקט אחסון תמונות צמחים (Storage Bucket)
 insert into storage.buckets (id, name, public)
 values ('plant-photos', 'plant-photos', true)
 on conflict (id) do nothing;

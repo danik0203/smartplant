@@ -58,9 +58,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (!newMemberName.trim()) return;
     const newM: HouseholdMember = {
       id: `mem_${Date.now()}`,
+      householdId: currentMember.householdId || 'default_home',
+      userId: `user_${Date.now()}`,
       name: newMemberName.trim(),
       avatar: newMemberAvatar,
-      color: '#16a34a'
+      color: '#16a34a',
+      role: 'member'
     };
     onSaveMembers([...members, newM]);
     setNewMemberName('');

@@ -4,10 +4,12 @@ import {
   Plant,
   PlantCareLog,
   HouseholdMember,
+  Household,
+  GoogleUserProfile,
   ActiveTab,
   PlantDiagnosisRecord
 } from './types';
-import { INITIAL_PLANTS, INITIAL_CARE_LOGS, INITIAL_MEMBERS } from './services/mockPlants';
+import { INITIAL_PLANTS, INITIAL_CARE_LOGS, INITIAL_MEMBERS, DEFAULT_HOUSEHOLD } from './services/mockPlants';
 import { plantSupabase, STORAGE_KEYS } from './services/supabase';
 import { getPlantWateringStatus } from './utils/plantCalculations';
 import { Navbar } from './components/Navbar';
@@ -19,8 +21,20 @@ import { ActivityHistoryTab } from './components/ActivityHistoryTab';
 import { PlantDetailsModal } from './components/PlantDetailsModal';
 import { AddPlantModal } from './components/AddPlantModal';
 import { SettingsModal } from './components/SettingsModal';
+import { HouseholdModal } from './components/HouseholdModal';
 
 export function App() {
+  const [currentHousehold, setCurrentHousehold] = useState<Household>(() =>
+    plantSupabase.getActiveHousehold()
+  );
+  const [allHouseholds, setAllHouseholds] = useState<Household[]>(() =>
+    plantSupabase.getCachedHouseholds()
+  );
+  const [googleUser, setGoogleUser] = useState<GoogleUserProfile | null>(() =>
+    plantSupabase.getSavedGoogleUser()
+  );
+  const [isHouseholdModalOpen, setIsHouseholdModalOpen] = useState(false);
+
   const [plants, setPlants] = useState<Plant[]>(() => plantSupabase.getLocalPlants());
   const [logs, setLogs] = useState<PlantCareLog[]>(() => plantSupabase.getLocalLogs());
   const [members, setMembers] = useState<HouseholdMember[]>(() => plantSupabase.getLocalMembers());
@@ -67,26 +81,66 @@ export function App() {
     localStorage.setItem('plants_care_theme_dark', String(isDark));
   }, [isDark]);
 
-  // Check URL params for PWA shortcuts
+  // Load & Sync Data from Supabase / LocalStorage
+  const refreshData = useCallback(async (targetHouseholdId?: string) => {
+    const hId = targetHouseholdId || currentHousehold.id;
+    const data = await plantSupabase.loadAllData(hId);
+    setPlants(data.plants);
+    setLogs(data.logs);
+    setMembers(data.members);
+    setSyncSource(data.source);
+    if (data.household) {
+      setCurrentHousehold(data.household);
+    }
+  }, [currentHousehold.id]);
+
+  // Check URL params for PWA shortcuts & household invite code
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const action = params.get('action');
     const tab = params.get('tab') as ActiveTab | null;
+    const joinCode = params.get('join');
+
     if (action === 'add') {
       setIsAddModalOpen(true);
     }
     if (tab && ['dashboard', 'plants', 'doctor', 'history'].includes(tab)) {
       setActiveTab(tab);
     }
-  }, []);
 
-  // Load & Sync Data from Supabase / LocalStorage
-  const refreshData = useCallback(async () => {
-    const data = await plantSupabase.loadAllData();
-    setPlants(data.plants);
-    setLogs(data.logs);
-    setMembers(data.members);
-    setSyncSource(data.source);
+    if (joinCode) {
+      (async () => {
+        const res = await plantSupabase.joinHouseholdByCode(
+          joinCode,
+          googleUser?.name || 'שותף',
+          googleUser
+        );
+        if (res.success && res.household) {
+          setCurrentHousehold(res.household);
+          setAllHouseholds(plantSupabase.getCachedHouseholds());
+          await refreshData(res.household.id);
+          showToast(`🎉 הצטרפת בהצלחה לקבוצה "${res.household.name}"!`);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          showToast(`⚠️ שגיאה בהצטרפות: ${res.message || 'קוד לא תקין'}`);
+        }
+      })();
+    }
+  }, [googleUser, refreshData]);
+
+  // Google Auth listener & Household sync
+  useEffect(() => {
+    const unsubscribe = plantSupabase.onAuthStateChange(async (user) => {
+      setGoogleUser(user);
+      if (user) {
+        showToast(`שלום ${user.name}! מחובר עם חשבון Google ✨`);
+        const userHomes = await plantSupabase.loadUserHouseholds(user);
+        if (userHomes.length > 0) {
+          setAllHouseholds(userHomes);
+        }
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -102,6 +156,22 @@ export function App() {
     setCurrentMember(member);
     localStorage.setItem(STORAGE_KEYS.CURRENT_MEMBER_ID, member.id);
     showToast(`מחובר בתור: ${member.avatar} ${member.name}`);
+  };
+
+  // Household Switching & Creation
+  const handleSwitchHousehold = async (h: Household) => {
+    plantSupabase.setActiveHousehold(h);
+    setCurrentHousehold(h);
+    await refreshData(h.id);
+    showToast(`עברת ל-${h.name} 🏡`);
+  };
+
+  const handleHouseholdCreatedOrJoined = async (h: Household) => {
+    setAllHouseholds(plantSupabase.getCachedHouseholds());
+    plantSupabase.setActiveHousehold(h);
+    setCurrentHousehold(h);
+    await refreshData(h.id);
+    showToast(`קבוצה פעילה: ${h.name} ✨`);
   };
 
   // Water a Plant
@@ -338,6 +408,10 @@ export function App() {
         }}
         syncSource={syncSource}
         thirstyCount={thirstyCount}
+        currentHousehold={currentHousehold}
+        onOpenHouseholdModal={() => setIsHouseholdModalOpen(true)}
+        googleUser={googleUser}
+        onGoogleUserChange={(user) => setGoogleUser(user)}
       />
 
       {/* Toast Feedback */}
@@ -465,6 +539,19 @@ export function App() {
             localStorage.setItem(STORAGE_KEYS.LOGS_CACHE, JSON.stringify(data.logs));
             localStorage.setItem(STORAGE_KEYS.MEMBERS_CACHE, JSON.stringify(data.members));
           }}
+        />
+      )}
+
+      {/* Household & Roommates Management Modal */}
+      {isHouseholdModalOpen && (
+        <HouseholdModal
+          onClose={() => setIsHouseholdModalOpen(false)}
+          currentHousehold={currentHousehold}
+          allHouseholds={allHouseholds}
+          members={members}
+          googleUser={googleUser}
+          onSwitchHousehold={handleSwitchHousehold}
+          onHouseholdCreatedOrJoined={handleHouseholdCreatedOrJoined}
         />
       )}
     </div>
