@@ -1,7 +1,7 @@
 -- =========================================================================
 -- Supabase Schema for "SmartPlant" (המשתלה הביתית)
 -- קבוצות / בתים משותפים, שותפים, צמחים, יומן השקיות, התחברות Google ובאקט תמונות
--- העתק את כל הקוד הזה והדבק ב-Supabase > SQL Editor ולחץ RUN
+-- גרסה בטוחה (Idempotent): מתמודדת עם טבלאות קיימות, עמודות חסרות ומדיניות קיימת
 -- =========================================================================
 
 -- 1. טבלת בתים / קבוצות משותפות (Households / Gardens)
@@ -27,7 +27,7 @@ create table if not exists public.household_members (
   unique (household_id, user_id)
 );
 
--- 3. טבלת צמחים (Plants) משויכת לבית
+-- 3. טבלת צמחים (Plants)
 create table if not exists public.plants (
   id text primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -62,7 +62,10 @@ create table if not exists public.plants (
   notes text default ''
 );
 
--- 4. טבלת יומן השקיות ופעולות בבית (Plant Care Logs) משויכת לבית
+-- אם טבלת plants כבר הייתה קיימת ללא household_id - נוסיף את העמודה עכשיו
+alter table public.plants add column if not exists household_id text default 'default_home';
+
+-- 4. טבלת יומן השקיות ופעולות בבית (Plant Care Logs)
 create table if not exists public.plant_care_logs (
   id text primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -74,39 +77,69 @@ create table if not exists public.plant_care_logs (
   notes text default ''
 );
 
--- אינדקסים למהירות שליפה לפי בית
+-- אם טבלת plant_care_logs כבר הייתה קיימת ללא household_id - נוסיף את העמודה עכשיו
+alter table public.plant_care_logs add column if not exists household_id text default 'default_home';
+
+-- הוספת בית ברירת מחדל במידה ואינו קיים
+insert into public.households (id, name, invite_code, created_by)
+values ('default_home', 'הבית שלנו 🏡', 'PLANT-HOME', 'admin')
+on conflict (id) do nothing;
+
+-- 5. אינדקסים למהירות שליפה
 create index if not exists idx_plants_household on public.plants(household_id);
 create index if not exists idx_logs_household on public.plant_care_logs(household_id);
 create index if not exists idx_members_household on public.household_members(household_id);
 create index if not exists idx_households_invite on public.households(invite_code);
 
--- 5. אפשור סנכרון בלייב (Realtime) לכל הטבלאות
-alter publication supabase_realtime add table public.households;
-alter publication supabase_realtime add table public.household_members;
-alter publication supabase_realtime add table public.plants;
-alter publication supabase_realtime add table public.plant_care_logs;
+-- 6. סנכרון בלייב (Realtime) - עטוף בבלוק כדי למנוע שגיאות אם כבר הוגדר
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.households;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.household_members;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.plants;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.plant_care_logs;
+  exception when duplicate_object then null;
+  end;
+end $$;
 
--- 6. הגדרת הרשאות גישה פתוחה (Row Level Security)
+-- 7. הגדרת אבטחת שורות (RLS) ומדיניות גישה מלאה
 alter table public.households enable row level security;
 alter table public.household_members enable row level security;
 alter table public.plants enable row level security;
 alter table public.plant_care_logs enable row level security;
 
+drop policy if exists "Allow all operations for households" on public.households;
 create policy "Allow all operations for households" on public.households for all using (true) with check (true);
+
+drop policy if exists "Allow all operations for household_members" on public.household_members;
 create policy "Allow all operations for household_members" on public.household_members for all using (true) with check (true);
+
+drop policy if exists "Allow all operations for plants" on public.plants;
 create policy "Allow all operations for plants" on public.plants for all using (true) with check (true);
+
+drop policy if exists "Allow all operations for plant_care_logs" on public.plant_care_logs;
 create policy "Allow all operations for plant_care_logs" on public.plant_care_logs for all using (true) with check (true);
 
--- 7. באקט אחסון תמונות צמחים (Storage Bucket)
+-- 8. באקט אחסון תמונות צמחים (Storage Bucket)
 insert into storage.buckets (id, name, public)
 values ('plant-photos', 'plant-photos', true)
 on conflict (id) do nothing;
 
-create policy "Public Access for Plant Photos"
-on storage.objects for select using (bucket_id = 'plant-photos');
+drop policy if exists "Public Access for Plant Photos" on storage.objects;
+create policy "Public Access for Plant Photos" on storage.objects for select using (bucket_id = 'plant-photos');
 
-create policy "Public Insert for Plant Photos"
-on storage.objects for insert with check (bucket_id = 'plant-photos');
+drop policy if exists "Public Insert for Plant Photos" on storage.objects;
+create policy "Public Insert for Plant Photos" on storage.objects for insert with check (bucket_id = 'plant-photos');
 
-create policy "Public Update for Plant Photos"
-on storage.objects for update using (bucket_id = 'plant-photos');
+drop policy if exists "Public Update for Plant Photos" on storage.objects;
+create policy "Public Update for Plant Photos" on storage.objects for update using (bucket_id = 'plant-photos');

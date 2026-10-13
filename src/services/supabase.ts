@@ -14,7 +14,8 @@ import {
 } from './mockPlants';
 
 export const DEFAULT_SUPABASE_URL = 'https://dxrzojnknssjhrgbjrju.supabase.co';
-export const DEFAULT_SUPABASE_KEY = 'sb_publishable_c3bICdt5jqJirdRHhjnLgQ_QoFSrxlP';
+export const DEFAULT_SUPABASE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4cnpvam5rbnNzamhyZ2Jqcmp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NzE5ODIsImV4cCI6MjEwNzQ0Nzk4Mn0.UQ2_NvxtMRM5V5lio-Q4tjIsstnt5Iil0Bn-lONb5RY';
 
 const ENV_SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
 const ENV_SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
