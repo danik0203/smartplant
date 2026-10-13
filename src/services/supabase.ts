@@ -202,14 +202,16 @@ export class PlantSupabaseService {
         callback(profile);
       } else {
         const cached = this.getSavedGoogleUser();
-        callback(cached);
+        if (cached) {
+          callback(cached);
+        }
       }
     });
 
     const {
       data: { subscription }
     } = this.client.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session?.user) {
+      if (event === 'SIGNED_OUT') {
         localStorage.removeItem(STORAGE_KEYS.GOOGLE_USER);
         callback(null);
       } else if (session?.user) {
