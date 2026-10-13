@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #FAF8F5;
+  --app-card: #FFFFFF;
+  --app-card-border: rgba(47, 62, 70, 0.08);
+  --app-text: #1E293B;
+  --app-text-muted: #64748B;
+  --app-accent: #16a34a;
+}
+
+.dark {
+  --app-bg: #09140E;
+  --app-card: #11241A;
+  --app-card-border: rgba(255, 255, 255, 0.08);
+  --app-text: #F8FAFC;
+  --app-text-muted: #94A3B8;
+  --app-accent: #22c55e;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    background-color: var(--app-bg);
+    color: var(--app-text);
+  }
+
+  body {
+    background-color: var(--app-bg);
+    color: var(--app-text);
+    font-family: 'Heebo', system-ui, -apple-system, sans-serif;
+  }
+
+  input, textarea, select {
+    user-select: auto;
+    -webkit-user-select: auto;
+  }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0.5rem);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
