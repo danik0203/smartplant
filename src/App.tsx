@@ -569,6 +569,8 @@ export function App() {
           }}
           googleUser={googleUser}
           onLogout={handleLogout}
+          isDark={isDark}
+          onToggleDark={() => setIsDark(!isDark)}
         />
       )}
 

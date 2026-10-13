@@ -13,7 +13,9 @@ import {
   Plus,
   Trash2,
   ExternalLink,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { HouseholdMember, Plant, PlantCareLog, GoogleUserProfile } from '../types';
 import { plantSupabase } from '../services/supabase';
@@ -30,6 +32,8 @@ interface SettingsModalProps {
   onImportBackup: (data: { plants: Plant[]; logs: PlantCareLog[]; members: HouseholdMember[] }) => void;
   googleUser: GoogleUserProfile | null;
   onLogout: () => void;
+  isDark: boolean;
+  onToggleDark: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -42,7 +46,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   allLogs,
   onImportBackup,
   googleUser,
-  onLogout
+  onLogout,
+  isDark,
+  onToggleDark
 }) => {
   const [geminiKey, setGeminiKey] = useState(getStoredGeminiKey());
   const [newMemberName, setNewMemberName] = useState('');
@@ -250,6 +256,52 @@ create policy "public insert photos" on storage.objects for insert with check (b
             )}
           </div>
 
+          {/* Section: Theme & Appearance */}
+          <div className="rounded-2xl bg-white dark:bg-void-900 border border-slate-200/80 dark:border-white/10 p-4 space-y-3 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-extrabold text-xs text-slate-400 uppercase tracking-wider block">
+                  ערכת נושא ומראה
+                </span>
+                <p className="text-xs text-slate-700 dark:text-slate-200 font-bold mt-0.5">
+                  {isDark ? 'מצב לילה פעיל (כהה) 🌙' : 'מצב יום פעיל (בהיר) ☀️'}
+                </p>
+              </div>
+
+              <div className="flex items-center bg-slate-100 dark:bg-void-800 p-1 rounded-xl gap-1 border border-slate-200/60 dark:border-white/5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isDark) onToggleDark();
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition ${
+                    !isDark
+                      ? 'bg-white text-amber-600 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Sun className="w-3.5 h-3.5 text-amber-500" />
+                  <span>יום</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isDark) onToggleDark();
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition ${
+                    isDark
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <Moon className="w-3.5 h-3.5 text-white" />
+                  <span>לילה</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Section 1: Household Members */}
           <div className="rounded-2xl bg-white dark:bg-void-900 border border-slate-200/80 dark:border-white/10 p-4 space-y-3 shadow-sm">
             <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
@@ -392,29 +444,45 @@ create policy "public insert photos" on storage.objects for insert with check (b
 
           {/* Section 3: Gemini AI Vision API Key */}
           <div className="rounded-2xl bg-white dark:bg-void-900 border border-slate-200/80 dark:border-white/10 p-4 space-y-3 shadow-sm">
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-              <Key className="w-4 h-4 text-amber-500" />
-              <span>מפתח Google Gemini AI (מוגדר ועובד אוטומטית)</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <Key className="w-4 h-4 text-amber-500" />
+                <span>מפתח Google Gemini AI</span>
+              </h3>
+
+              <a
+                href="https://aistudio.google.com/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-800/40 flex items-center gap-1 transition"
+                title="פתח את רשימת כל המפתחות שלך ב-Google AI Studio"
+              >
+                <span>רשימת המפתחות שלך בגוגל</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              משמש לזיהוי אוטומטי של צמחים בצילום ולאבחון רופא הצמחים. המפתח מוגדר מראש ואינו דורש שינוי.
+              משמש לזיהוי אוטומטי של צמחים בצילום, מענה בוט הבוטנאי ואבחון מחלות. מפתח תקין מתחיל ב-<code>AIzaSy...</code>
             </p>
 
             <form onSubmit={handleSaveGeminiKey} className="space-y-2">
               <input
-                type="password"
+                type="text"
                 value={geminiKey}
                 onChange={(e) => setGeminiKey(e.target.value)}
-                placeholder="AIzaSy..."
+                placeholder="הדבק כאן מפתח Gemini (מתחיל ב-AIzaSy...)"
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-void-800 border border-slate-200 dark:border-white/10 text-xs font-mono"
               />
               <div className="flex items-center justify-between text-xs">
-                <span className="text-emerald-600 font-bold">✓ מפתח פעיל וזמין</span>
+                <span className={geminiKey ? "text-emerald-600 font-bold" : "text-slate-400 font-bold"}>
+                  {geminiKey ? '✓ מפתח מוגדר במכשיר' : 'טרם הוגדר מפתח אישי'}
+                </span>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 dark:bg-emerald-700 text-white font-bold"
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-sm active:scale-95"
                 >
-                  עדכן מפתח
+                  שמור מפתח
                 </button>
               </div>
             </form>
