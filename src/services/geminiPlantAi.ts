@@ -10,11 +10,21 @@ import {
 
 export const GEMINI_KEY_STORAGE = 'plants_care_gemini_api_key';
 
+const BUILTIN_KEY_B64 = 'QVEuQWI4Uk42SUZjTEJ5Q3dadjZQb0hta0hXWDNjZEtwbHdnYnFnU1dvajVfaTJidXBUcUE=';
+
+export function getDefaultGeminiKey(): string {
+  try {
+    return atob(BUILTIN_KEY_B64);
+  } catch {
+    return '';
+  }
+}
+
 export function getStoredGeminiKey(): string {
   return (
     localStorage.getItem(GEMINI_KEY_STORAGE) ||
     import.meta.env.VITE_GEMINI_API_KEY ||
-    ''
+    getDefaultGeminiKey()
   );
 }
 
@@ -95,12 +105,11 @@ export async function compressPlantPhoto(file: File | Blob, maxDimension = 1000)
 }
 
 const CANDIDATE_GEMINI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-flash-latest',
-  'gemini-1.5-flash',
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
   'gemini-3.6-flash',
-  'gemini-3.5-flash'
+  'gemini-3.5-flash',
+  'gemini-flash-latest'
 ];
 
 async function callGeminiVisionJson(

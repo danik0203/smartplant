@@ -446,43 +446,43 @@ create policy "public insert photos" on storage.objects for insert with check (b
           <div className="rounded-2xl bg-white dark:bg-void-900 border border-slate-200/80 dark:border-white/10 p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <Key className="w-4 h-4 text-amber-500" />
-                <span>מפתח Google Gemini AI</span>
+                <Key className="w-4 h-4 text-emerald-600" />
+                <span>מערכת Google Gemini AI</span>
               </h3>
 
-              <a
-                href="https://aistudio.google.com/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-800/40 flex items-center gap-1 transition"
-                title="פתח את רשימת כל המפתחות שלך ב-Google AI Studio"
-              >
-                <span>רשימת המפתחות שלך בגוגל</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200">
+                פעיל ומשותף לכל השותפים ✓
+              </span>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              משמש לזיהוי אוטומטי של צמחים בצילום, מענה בוט הבוטנאי ואבחון מחלות. מפתח תקין מתחיל ב-<code>AIzaSy...</code>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              המפתח שלך מוטמע ישירות בתוכנה ומשמש את כל בני הבית לזיהוי צמחים, שיחה עם הבוטנאי ואבחון מחלות. <strong>השותפים לא צריכים לחבר שום מפתח בעצמם.</strong>
             </p>
 
-            <form onSubmit={handleSaveGeminiKey} className="space-y-2">
+            <form onSubmit={handleSaveGeminiKey} className="space-y-2 pt-1">
+              <div className="flex items-center justify-between text-xs text-slate-400 font-bold">
+                <span>מפתח מערכת פעיל:</span>
+                <span className="font-mono text-[11px] text-slate-600 dark:text-slate-300">
+                  {geminiKey ? `${geminiKey.slice(0, 8)}••••••••${geminiKey.slice(-4)}` : 'ברירת מחדל מוטמעת'}
+                </span>
+              </div>
+
               <input
                 type="text"
                 value={geminiKey}
                 onChange={(e) => setGeminiKey(e.target.value)}
-                placeholder="הדבק כאן מפתח Gemini (מתחיל ב-AIzaSy...)"
+                placeholder="הדבק מפתח חלופי (אופציונלי)"
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-void-800 border border-slate-200 dark:border-white/10 text-xs font-mono"
               />
               <div className="flex items-center justify-between text-xs">
-                <span className={geminiKey ? "text-emerald-600 font-bold" : "text-slate-400 font-bold"}>
-                  {geminiKey ? '✓ מפתח מוגדר במכשיר' : 'טרם הוגדר מפתח אישי'}
+                <span className="text-emerald-600 font-bold">
+                  ✓ מוטמע ופעיל באפליקציה
                 </span>
                 <button
                   type="submit"
                   className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-sm active:scale-95"
                 >
-                  שמור מפתח
+                  עדכן מפתח
                 </button>
               </div>
             </form>
