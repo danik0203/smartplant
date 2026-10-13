@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sprout, Settings, Sun, Moon, Cloud, HardDrive, Home, ChevronDown } from 'lucide-react';
+import { Sprout, Settings, Sun, Moon, Cloud, HardDrive, Home, ChevronDown, Bot } from 'lucide-react';
 import { HouseholdMember, Household, GoogleUserProfile } from '../types';
 import { GoogleAuthButton } from './GoogleAuthButton';
 
@@ -11,6 +11,7 @@ interface NavbarProps {
   onToggleDark: () => void;
   onOpenSettings: () => void;
   onOpenAddPlant: () => void;
+  onOpenAIChat: () => void;
   syncSource: 'remote' | 'local';
   thirstyCount: number;
   currentHousehold: Household;
@@ -26,6 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isDark,
   onToggleDark,
   onOpenSettings,
+  onOpenAIChat,
   syncSource,
   currentHousehold,
   onOpenHouseholdModal,
@@ -86,6 +88,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="max-w-[50px] sm:max-w-[65px] truncate hidden sm:inline">
               {currentMember.name}
             </span>
+          </button>
+
+          {/* AI Botanist Chat */}
+          <button
+            onClick={onOpenAIChat}
+            aria-label="דבר עם מומחה הצמחים AI"
+            title="דבר עם מומחה הצמחים AI 🤖"
+            className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 active:scale-95 transition hover:bg-emerald-100"
+          >
+            <Bot className="w-4 h-4" />
           </button>
 
           {/* Theme Toggle */}

@@ -339,3 +339,167 @@ Return ONLY a valid JSON object with this exact schema:
   onProgress?.(100, 'האבחון מוכן!');
   return record;
 }
+
+export interface ChatHistoryItem {
+  role: 'user' | 'model';
+  text: string;
+  imageBase64?: string;
+  imageMime?: string;
+}
+
+/**
+ * Tests if a Gemini API Key is valid and functional
+ */
+export async function testGeminiApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
+  const cleanKey = apiKey.trim();
+  if (!cleanKey) {
+    return { success: false, message: 'מפתח ריק. אנא הזן מפתח API של Gemini.' };
+  }
+
+  for (const model of CANDIDATE_GEMINI_MODELS) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'שלום, ענה במילה אחת בלבד: פועל' }] }],
+          generationConfig: { maxOutputTokens: 10 }
+        })
+      });
+
+      if (res.ok) {
+        return { success: true, message: 'מפתח ה-Gemini תקין ומחובר בהצלחה! 🟢' };
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson?.error?.message || `שגיאת אימות ${res.status}`;
+        if (res.status === 400 || res.status === 403 || res.status === 401) {
+          return { success: false, message: `מפתח לא תקין: ${msg}` };
+        }
+      }
+    } catch (e: any) {
+      // Continue to next model if model specific
+    }
+  }
+
+  return { success: false, message: 'לא הצלחנו לאמת את המפתח מול Google Gemini. בדוק את החיבור לרשת.' };
+}
+
+/**
+ * Natural Conversational Bot with Garden Context and Photo Inspection ("הבוטנאי של הבית")
+ */
+export async function chatWithPlantAI(
+  conversation: ChatHistoryItem[],
+  gardenPlants: Plant[],
+  apiKey: string
+): Promise<string> {
+  const keyToUse = apiKey.trim() || getStoredGeminiKey();
+  if (!keyToUse) {
+    throw new Error('חסר מפתח Gemini API. אנא הזן מפתח בהגדרות או בחלון הצ׳אט.');
+  }
+
+  const gardenSummary =
+    gardenPlants.length > 0
+      ? `הצמחים הקיימים בגינה של המשתמש כרגע:\n` +
+        gardenPlants
+          .map(
+            (p) =>
+              `- ${p.name} (${p.species}, ממוקם ב-${p.room}, השקיה כל ${p.wateringFrequencyDays} ימים, קרקע: ${p.soilType}, שמש: ${p.sunlight}, בריאות: ${p.healthStatus})`
+          )
+          .join('\n')
+      : 'למשתמש עדיין אין צמחים רשומים באפליקציה.';
+
+  const systemInstruction = `אתה "הבוטנאי של הבית" - מומחה בינה מלאכותית מוסמך לבוטניקה, גידול צמחי בית ומרפסת ורפואת צמחים מותאמת לאקלים הישראלי.
+תפקידך לסייע למשתמש ולשותפיו לשמור על הצמחים שלהם ירוקים, שופעים ובריאים.
+
+הקשר הגינה של המשתמש:
+${gardenSummary}
+
+כללים לתשובה:
+1. ענה תמיד בעברית טבעית, חמה, מקצועית ומעשית.
+2. השתמש באמוג'ים רלוונטיים (🌿, 💧, ☀️, 🩺) וסעיפים קצרים, ללא מלל ארוך ומייגע.
+3. אם המשתמש מצרף תמונה, נתח אותה מיד: זהה את הצמח, בחן את העלים, הקרקע והמזיקים, ותן המלצה ממוקדת.
+4. בהשקיות - תמיד הזכר לבדוק את לחות האדמה באצבע ולא רק להסתמך על לוח זמנים.
+5. הצע פתרונות פשוטים וזמינים בכל בית בישראל (מי ברז מושהים, ניקוז, כיוון אור, כבול/פרלייט).`;
+
+  const contents = conversation.map((msg) => {
+    const parts: any[] = [];
+    if (msg.text) {
+      parts.push({ text: msg.text });
+    }
+    if (msg.imageBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: msg.imageMime || 'image/jpeg',
+          data: msg.imageBase64
+        }
+      });
+    }
+    return {
+      role: msg.role,
+      parts
+    };
+  });
+
+  let lastError = '';
+  for (const model of CANDIDATE_GEMINI_MODELS) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyToUse}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemInstruction }]
+          },
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1200
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text.trim();
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        lastError = errData?.error?.message || `HTTP ${response.status}`;
+      }
+    } catch (e: any) {
+      lastError = e.message || 'שגיאת רשת';
+    }
+  }
+
+  throw new Error(lastError || 'לא הצלחנו לקבל תשובה מ-Gemini.');
+}
+
+/**
+ * Text to Speech (TTS) in Hebrew using Web Speech API
+ */
+export function speakTextHebrew(text: string): boolean {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+  try {
+    window.speechSynthesis.cancel();
+    const cleanText = text
+      .replace(/[*_#`~>]/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .slice(0, 300); // speak first paragraphs nicely
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'he-IL';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function stopSpeaking(): void {
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+}

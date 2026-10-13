@@ -19,9 +19,11 @@ import { MyPlantsTab } from './components/MyPlantsTab';
 import { PlantDoctorTab } from './components/PlantDoctorTab';
 import { ActivityHistoryTab } from './components/ActivityHistoryTab';
 import { PlantDetailsModal } from './components/PlantDetailsModal';
+import { Bot } from 'lucide-react';
 import { AddPlantModal } from './components/AddPlantModal';
 import { SettingsModal } from './components/SettingsModal';
 import { HouseholdModal } from './components/HouseholdModal';
+import { AIChatModal } from './components/AIChatModal';
 
 export function App() {
   const [currentHousehold, setCurrentHousehold] = useState<Household>(() =>
@@ -34,6 +36,7 @@ export function App() {
     plantSupabase.getSavedGoogleUser()
   );
   const [isHouseholdModalOpen, setIsHouseholdModalOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const [plants, setPlants] = useState<Plant[]>(() => plantSupabase.getLocalPlants());
   const [logs, setLogs] = useState<PlantCareLog[]>(() => plantSupabase.getLocalLogs());
@@ -410,6 +413,7 @@ export function App() {
         thirstyCount={thirstyCount}
         currentHousehold={currentHousehold}
         onOpenHouseholdModal={() => setIsHouseholdModalOpen(true)}
+        onOpenAIChat={() => setIsChatOpen(true)}
         googleUser={googleUser}
         onGoogleUserChange={(user) => setGoogleUser(user)}
       />
@@ -552,6 +556,26 @@ export function App() {
           googleUser={googleUser}
           onSwitchHousehold={handleSwitchHousehold}
           onHouseholdCreatedOrJoined={handleHouseholdCreatedOrJoined}
+        />
+      )}
+
+      {/* Floating AI Botanist Chat Button */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        title="שוחח עם מומחה הצמחים AI 🤖"
+        className="fixed bottom-20 left-4 z-20 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-600/35 active:scale-95 transition backdrop-blur-md border border-white/20"
+      >
+        <Bot className="w-4 h-4" />
+        <span className="text-xs font-black">דבר עם ה-AI</span>
+        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+      </button>
+
+      {/* AI Botanist Chat Modal */}
+      {isChatOpen && (
+        <AIChatModal
+          onClose={() => setIsChatOpen(false)}
+          plants={plants}
+          currentMemberName={currentMember.name}
         />
       )}
     </div>

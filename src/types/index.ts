@@ -150,3 +150,11 @@ export interface AIPlantAnalysisResult {
   treatmentSteps: string[];
   diagnosisSummary: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  text: string;
+  imageUrl?: string;
+  timestamp: number;
+}
